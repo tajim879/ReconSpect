@@ -1,6 +1,6 @@
 # 🔍 ReconSpect
 
-**ReconSpect** is a lightweight, Zphisher-inspired interactive CLI tool built with Python for automated reconnaissance and OSINT (Open Source Intelligence) gathering. Designed primarily for Kali Linux users and ethical hackers.
+**ReconSpect** is a lightweight, Zphisher-inspired interactive CLI tool built with Python for automated reconnaissance and OSINT (Open Source Intelligence) gathering. Designed primarily for Kali Linux and Linux-based security environments.
 
 ---
 
@@ -14,17 +14,12 @@
 
 ### 📦 Installation & Setup
 
-Clone the repository and run the setup commands in your terminal (Kali Linux / Termux / Ubuntu):
+Clone the repository and run the setup commands based on your operating system:
 
+#### 1. Kali Linux / Ubuntu / Debian / WSL
 ```bash
-# Clone the repository
-git clone [https://github.com/YOUR_USERNAME/ReconSpect.git](https://github.com/YOUR_USERNAME/ReconSpect.git)
-
-# Navigate into the directory
+sudo apt update && sudo apt install git python3 python3-pip -y
+git clone https://github.com/tajim879/ReconSpect.git
 cd ReconSpect
-
-# Install required dependencies
-pip install -r requirements.txt
-
-# Run the tool
+pip3 install -r requirements.txt --break-system-packages
 python3 recon.py
