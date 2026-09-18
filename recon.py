@@ -2,6 +2,8 @@ import os
 import sys
 import time
 import socket
+import subprocess
+import platform
 import requests
 from colorama import init, Fore, Style
 
@@ -14,12 +16,12 @@ def clear_screen():
 def banner():
     print(f"""{Fore.CYAN}
   ██████╗ ███████╗ ██████╗ ██████╗ ███████╗██████╗ ███████╗ ██████╗████████╗
-  ██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝
+  ██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝██╔══██╗██╔════╝██╔════╝╚██╔══╝
   ██████╔╝█████╗  ██║     ██║   ██║███████╗██████╔╝█████╗  ██║        ██║   
   ██╔══██╗██╔══╝  ██║     ██║   ██║╚════██║██╔═══╝ ██╔══╝  ██║        ██║   
   ██║  ██║███████╗╚██████╗╚██████╔╝███████║██║     ███████╗╚██████╗   ██║   
   ╚═╝  ╚═╝╚══════╝ ╚══════╝ ╚══════╝╚══════╝╚═╝     ╚══════╝ ╚══════╝   ╚═╝   
-    {Style.DIM}{Fore.GREEN}                  [ v1.0 - Automated Recon & OSINT Tool ]
+    {Style.DIM}{Fore.GREEN}                  [ v2.0 - Advanced Recon & Wi-Fi Scanner ]
                       [ Coded by: Tajim Uddin ]{Style.RESET_ALL}
 """)
 
@@ -27,19 +29,19 @@ def main_menu():
     clear_screen()
     banner()
     print(f"{Fore.YELLOW}  [::] Choose Recon Type / Module [::]{Style.RESET_ALL}\n")
-    print(f"    {Fore.GREEN}[01]{Fore.RESET} Full Recon (IP & Basic DNS Scan)")
-    print(f"    {Fore.GREEN}[02]{Fore.RESET} IP Geolocation Lookup")
-    print(f"    {Fore.GREEN}[03]{Fore.RESET} DNS Records Check")
+    print(f"    {Fore.GREEN}[01]{Fore.RESET} Public IP / Domain Geolocation Lookup")
+    print(f"    {Fore.GREEN}[02]{Fore.RESET} Local Wi-Fi Connected Devices Scanner")
+    print(f"    {Fore.GREEN}[03]{Fore.RESET} DNS Records & Subdomain Check")
     print(f"    {Fore.GREEN}[99]{Fore.RESET} About Tool")
     print(f"    {Fore.RED}[00]{Fore.RESET} Exit\n")
     
-    choice = input(f"{Fore.CYAN}  recon@spect:~# {Style.RESET_ALL}")
+    choice = input(f"{Fore.CYAN}  recon@spect-v2:~# {Style.RESET_ALL}")
     return choice
 
 def ip_lookup():
     clear_screen()
     banner()
-    domain = input(f"{Fore.YELLOW}[?] Enter Domain or IP (e.g., example.com): {Style.RESET_ALL}")
+    domain = input(f"{Fore.YELLOW}[?] Enter Public Domain or IP (e.g., example.com): {Style.RESET_ALL}")
     if not domain:
         return
     
@@ -49,7 +51,7 @@ def ip_lookup():
         print(f"{Fore.GREEN}[+] Target IP: {ip}{Style.RESET_ALL}")
         
         print(f"{Fore.BLUE}[*] Fetching Geolocation details...{Style.RESET_ALL}")
-        response = requests.get(f"http://ip-api.com/json/{ip}")
+        response = requests.get(f"http://ip-api.com/json/{ip}", timeout=5)
         data = response.json()
         
         if data['status'] == 'success':
@@ -60,11 +62,35 @@ def ip_lookup():
             print(f" ISP         : {data.get('isp')}")
             print(f" Organization: {data.get('org')}")
         else:
-            print(f"{Fore.RED}[!] Failed to fetch location data.{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] Failed to fetch location data (Make sure it's a Public IP/Domain).{Style.RESET_ALL}")
             
     except Exception as e:
         print(f"{Fore.RED}[!] Error: {e}{Style.RESET_ALL}")
         
+    input(f"\n{Fore.CYAN}[Press Enter to return to main menu]{Style.RESET_ALL}")
+
+def local_wifi_scanner():
+    clear_screen()
+    banner()
+    print(f"{Fore.YELLOW}[*] Scanning local network / Wi-Fi connected devices...{Style.RESET_ALL}")
+    print(f"{Fore.BLUE}[*] Please wait, checking ARP table and active hosts...\n{Style.RESET_ALL}")
+    
+    try:
+        # Using system arp command to list connected devices on the local network
+        if platform.system() == "Windows":
+            cmd = "arp -a"
+        else:
+            cmd = "ip neigh || arp -a"
+            
+        result = subprocess.check_output(cmd, shell=True, text=True)
+        
+        print(f"{Fore.GREEN}--- Local Network Devices Found ---{Style.RESET_ALL}")
+        print(result)
+        
+        print(f"\n{Fore.CYAN}[i] Note: These are local IP & hardware addresses connected to your network segment.{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}[!] Error scanning local network: {e}{Style.RESET_ALL}")
+
     input(f"\n{Fore.CYAN}[Press Enter to return to main menu]{Style.RESET_ALL}")
 
 def dns_lookup():
@@ -74,12 +100,11 @@ def dns_lookup():
     if not domain:
         return
         
-    print(f"\n{Fore.BLUE}[*] Gathering basic info for {domain}...{Style.RESET_ALL}")
+    print(f"\n{Fore.BLUE}[*] Gathering info for {domain}...{Style.RESET_ALL}")
     try:
         ip = socket.gethostbyname(domain)
         print(f"{Fore.GREEN}[+] Primary IP: {ip}{Style.RESET_ALL}")
         
-        # Using crt.sh public certificate logs for subdomains/DNS info as a lightweight method
         print(f"{Fore.BLUE}[*] Checking public certificate logs for subdomains...{Style.RESET_ALL}")
         url = f"https://crt.sh/?q=%.{domain}&output=json"
         res = requests.get(url, timeout=10)
@@ -91,7 +116,7 @@ def dns_lookup():
                     for sub in name_value.split('\n'):
                         subdomains.add(sub.strip())
             print(f"\n{Fore.GREEN}[+] Found {len(subdomains)} unique subdomains/entries:{Style.RESET_ALL}")
-            for sub in list(subdomains)[:15]: # Show first 15
+            for sub in list(subdomains)[:15]:
                 print(f"    - {sub}")
         else:
             print(f"{Fore.YELLOW}[!] Could not fetch crt.sh logs.{Style.RESET_ALL}")
@@ -104,8 +129,8 @@ def dns_lookup():
 def about():
     clear_screen()
     banner()
-    print(f"{Fore.WHITE}  ReconSpect is an automated reconnaissance and OSINT tool")
-    print(f"  designed for cybersecurity enthusiasts and ethical hackers.")
+    print(f"{Fore.WHITE}  ReconSpect v2.0 is an advanced reconnaissance and OSINT tool")
+    print(f"  featuring local Wi-Fi device scanning and public IP geolocation.")
     print(f"  Developed by Tajim Uddin for educational and authorized testing.{Style.RESET_ALL}")
     input(f"\n{Fore.CYAN}[Press Enter to return to main menu]{Style.RESET_ALL}")
 
@@ -115,7 +140,7 @@ if __name__ == '__main__':
         if choice == '01' or choice == '1':
             ip_lookup()
         elif choice == '02' or choice == '2':
-            ip_lookup()
+            local_wifi_scanner()
         elif choice == '03' or choice == '3':
             dns_lookup()
         elif choice == '99':
